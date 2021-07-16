@@ -53,6 +53,8 @@ class LEMS(object):
     # function to write data to netcdf
     def to_netcdf(self,outfile,ts=None,tf=None):
         
+        print("[LEMS] \t Writing netCDF4 version: %s"%outfile)
+
         # create output file
         self.outfile             = nc.Dataset(outfile,'w')
         self.outfile.description = "LEMS output file"
@@ -100,35 +102,35 @@ class LEMS(object):
         ncvar.long_name = "ambient air temperature from SHT"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","SHT")
-        ncvar.setncattr("height","1.5 m AGL")
+        ncvar.setncattr("level","1.5 m AGL")
         ncvar[:]        = self.T_air_am[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('T_air_son', "f8", ("t",))
         ncvar.long_name = "ambient air temperature from sonic anemometer"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","sonic")
-        ncvar.setncattr("height","2 m AGL")
+        ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.T_anemom[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('T_air_bmp', "f8", ("t",))
         ncvar.long_name = "ambient air temperature from BMP pressure sensor"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","BMP")
-        ncvar.setncattr("height","1 m AGL")
+        ncvar.setncattr("level","1 m AGL")
         ncvar[:]        = self.T_bmp_am[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('T_soil_u', "f8", ("t",))
         ncvar.long_name = "soil temperature (upper)"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","5TM")
-        ncvar.setncattr("height","5 cm BGL")
+        ncvar.setncattr("level","5 cm BGL")
         ncvar[:]        = self.T_soil_u[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('T_soil_l', "f8", ("t",))
         ncvar.long_name = "soil temperature (lower)"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","5TM")
-        ncvar.setncattr("height","50 cm BGL")
+        ncvar.setncattr("level","50 cm BGL")
         ncvar[:]        = self.T_soil_l[tsid:tfid+1]
 
         # moisture
@@ -136,21 +138,21 @@ class LEMS(object):
         ncvar.long_name = "relative humidity of air"
         ncvar.units     = "%"
         ncvar.setncattr("instrument","SHT")
-        ncvar.setncattr("height","1.5 m AGL")
+        ncvar.setncattr("level","1.5 m AGL")
         ncvar[:]        = self.relh_air[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('q_soil_u', "f8", ("t",))
         ncvar.long_name = "volumetric soil water content (upper)"
         ncvar.units     = "m3 m-3"
         ncvar.setncattr("instrument","5TM")
-        ncvar.setncattr("height","5 cm BGL")
+        ncvar.setncattr("level","5 cm BGL")
         ncvar[:]        = self.q_soil_u[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('q_soil_l', "f8", ("t",))
         ncvar.long_name = "volumetric soil water content (lower)"
         ncvar.units     = "m3 m-3"
         ncvar.setncattr("instrument","5TM")
-        ncvar.setncattr("height","50 cm BGL")
+        ncvar.setncattr("level","50 cm BGL")
         ncvar[:]        = self.q_soil_l[tsid:tfid+1]
 
         # wind
@@ -158,21 +160,21 @@ class LEMS(object):
         ncvar.long_name = "wind speed from sonic"
         ncvar.units     = "m s-1"
         ncvar.setncattr("instrument","sonic")
-        ncvar.setncattr("height","2 m AGL")
+        ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_spd[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('wind_gst', "f8", ("t",))
         ncvar.long_name = "wind gust from sonic"
         ncvar.units     = "m s-1"
         ncvar.setncattr("instrument","sonic")
-        ncvar.setncattr("height","2 m AGL")
+        ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_gst[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('wind_dir', "f8", ("t",))
         ncvar.long_name = "wind direction from sonic"
         ncvar.units     = "deg"
         ncvar.setncattr("instrument","sonic")
-        ncvar.setncattr("height","2 m AGL")
+        ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_dir[tsid:tfid+1]
        
         # pressure
@@ -180,7 +182,7 @@ class LEMS(object):
         ncvar.long_name = "pressure from BMP sensor"
         ncvar.units     = "hPa"
         ncvar.setncattr("instrument","BMP")
-        ncvar.setncattr("height","1 m AGL")
+        ncvar.setncattr("level","1 m AGL")
         ncvar[:]        = self.pressure[tsid:tfid+1]
         
         # insolation
@@ -188,7 +190,7 @@ class LEMS(object):
         ncvar.long_name = "incoming solar radiation"
         ncvar.units     = "W m-2"
         ncvar.setncattr("instrument","LiCor")
-        ncvar.setncattr("height","2m AGL")
+        ncvar.setncattr("level","2m AGL")
         ncvar[:]        = self.radsolar[tsid:tfid+1]
         self.radsolar   = self.data['Sunlight'].to_numpy()
         
