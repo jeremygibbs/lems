@@ -22,3 +22,10 @@ You might not want to save the entire time record. You can specify a desired sta
  python lems_post.py -i LEMS.csv -e '2021-07-08 10:00:00'
  python lems_post.py -i LEMS.csv -s '2021-07-07 10:00:00' -e '2021-07-08 10:00:00'
 ```
+
+## Specifying an averaging window
+This command will will load the `LEMS.csv` file and output a rolling average over a 10-minute window for all fields to a netCDF4 file named `LEMS_avg.nc`.
+
+```
+ python lems_post.py -i LEMS.csv -o LEMS_avg.nc -a 10
+```

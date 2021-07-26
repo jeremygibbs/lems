@@ -9,7 +9,7 @@ import pylab as pl
 class LEMS(object):
 
     # initialization
-    def __init__(self,datafile):
+    def __init__(self,datafile, window):
 
         print("[LEMS] \t Reading LEMS file: %s"%datafile)
 
@@ -23,32 +23,32 @@ class LEMS(object):
         self.nt   = len(self.date)
 
         # battery level
-        self.battery_level = self.data['Bat_Lvl'].to_numpy()
+        self.battery_level = self.data['Bat_Lvl'].rolling(window).mean()
         
         # temperature
-        self.T_sfc_ir = self.data['MLX_IR_C'].to_numpy()
-        self.T_sfc_am = self.data['MLX_Amb_C'].to_numpy()
-        self.T_air_am = self.data['SHT_Amb_C'].to_numpy()
-        self.T_soil_u = self.data['Upper_Soil_Temp'].to_numpy()
-        self.T_soil_l = self.data['Lower_Soil_Temp'].to_numpy()
-        self.T_bmp_am = self.data['BMP_Amb'].to_numpy()
-        self.T_anemom = self.data['Sonic_Tmp'].to_numpy()
+        self.T_sfc_ir = self.data['MLX_IR_C'].rolling(window).mean()
+        self.T_sfc_am = self.data['MLX_Amb_C'].rolling(window).mean()
+        self.T_air_am = self.data['SHT_Amb_C'].rolling(window).mean()
+        self.T_soil_u = self.data['Upper_Soil_Temp'].rolling(window).mean()
+        self.T_soil_l = self.data['Lower_Soil_Temp'].rolling(window).mean()
+        self.T_bmp_am = self.data['BMP_Amb'].rolling(window).mean()
+        self.T_anemom = self.data['Sonic_Tmp'].rolling(window).mean()
 
         # moisture
-        self.relh_air = self.data['SHT_Hum_Pct'].to_numpy()
-        self.q_soil_u = self.data['Upper_Soil_Mois'].to_numpy()
-        self.q_soil_l = self.data['Lower_Soil_Mois'].to_numpy()
+        self.relh_air = self.data['SHT_Hum_Pct'].rolling(window).mean()
+        self.q_soil_u = self.data['Upper_Soil_Mois'].rolling(window).mean()
+        self.q_soil_l = self.data['Lower_Soil_Mois'].rolling(window).mean()
         
         # wind
-        self.wind_spd = self.data['Sonic_Spd'].to_numpy()
-        self.wind_dir = self.data['Sonic_Dir'].to_numpy()
-        self.wind_gst = self.data['Sonic_Gst'].to_numpy()
+        self.wind_spd = self.data['Sonic_Spd'].rolling(window).mean()
+        self.wind_dir = self.data['Sonic_Dir'].rolling(window).mean()
+        self.wind_gst = self.data['Sonic_Gst'].rolling(window).mean()
 
         # pressure
-        self.pressure = self.data['Pressure'].to_numpy()
+        self.pressure = self.data['Pressure'].rolling(window).mean()
         
         # insolation
-        self.radsolar = self.data['Sunlight'].to_numpy()
+        self.radsolar = self.data['Sunlight'].rolling(window).mean()
 
     # function to write data to netcdf
     def to_netcdf(self,outfile,ts=None,tf=None):
@@ -59,7 +59,7 @@ class LEMS(object):
         self.outfile             = nc.Dataset(outfile,'w')
         self.outfile.description = "LEMS output file"
         self.outfile.source      = "Jeremy A. Gibbs"
-        self.outfile.history     = "Created " + time.ctime(time.time())
+        #self.outfile.history     = "Created " + time.ctime(time.time())
         
         # starting time index
         tsid = 0
@@ -192,7 +192,6 @@ class LEMS(object):
         ncvar.setncattr("instrument","LiCor")
         ncvar.setncattr("level","2m AGL")
         ncvar[:]        = self.radsolar[tsid:tfid+1]
-        self.radsolar   = self.data['Sunlight'].to_numpy()
         
     # utlity function to format date/time for Pandas
     def parse(self, year, month, day, hour, minute, second):
@@ -216,19 +215,25 @@ if __name__ == "__main__":
                         type=datetime.datetime.fromisoformat,help="start time: YYYMMDD hh:mm:ss")
     parser.add_argument('-e', "--end", dest='end',action='store',
                         type=datetime.datetime.fromisoformat,help="end time: YYYMMDD hh:mm:ss")
+    parser.add_argument('-a', "--avg", dest='avg',action='store',
+                        type=float,help="averaging window in minutes")
     
     args  = parser.parse_args()
     ifile = args.infile
     ofile = args.outfile
     start = args.start
     end   = args.end
+    avg   = args.avg
+
+    # convert averaging window to number of records at 10 Hz
+    window = int(avg * 60 / 10) if avg else 1
 
     # if no netcdf output name given, use base name from input file
     if not ofile:
         ofile = os.path.splitext(ifile)[0] + '.nc'
 
     # create LEMS instance from file
-    lems = LEMS(ifile)
+    lems = LEMS(ifile,window=window)
 
     # save to netCDF file
     lems.to_netcdf(ofile,ts=start,tf=end)
