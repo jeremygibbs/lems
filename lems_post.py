@@ -40,8 +40,12 @@ class LEMS(object):
         self.q_soil_l = self.data['Lower_Soil_Mois'].rolling(window).mean()
         
         # wind
-        self.wind_spd = self.data['Sonic_Spd'].rolling(window).mean()
-        self.wind_dir = self.data['Sonic_Dir'].rolling(window).mean()
+        self.wind_spd = self.data['Sonic_Spd']
+        self.wind_dir = self.data['Sonic_Dir']
+        self.winducom = (-self.data['Sonic_Spd']*np.sin(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
+        self.windvcom = (-self.data['Sonic_Spd']*np.cos(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
+        self.wind_spd = np.sqrt(self.winducom**2 + self.windvcom**2)
+        self.wind_dir = (270-np.rad2deg(np.arctan2(self.windvcom,self.winducom)))%360
         self.wind_gst = self.data['Sonic_Gst'].rolling(window).mean()
 
         # pressure
