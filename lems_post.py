@@ -42,10 +42,10 @@ class LEMS(object):
         # wind
         self.wind_spd = self.data['Sonic_Spd']
         self.wind_dir = self.data['Sonic_Dir']
-        self.winducom = (-self.data['Sonic_Spd']*np.sin(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
-        self.windvcom = (-self.data['Sonic_Spd']*np.cos(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
-        self.wind_spd = np.sqrt(self.winducom**2 + self.windvcom**2)
-        self.wind_dir = (270-np.rad2deg(np.arctan2(self.windvcom,self.winducom)))%360
+        self.wind_ucp = (-self.data['Sonic_Spd']*np.sin(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
+        self.wind_vcp = (-self.data['Sonic_Spd']*np.cos(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
+        self.wind_spd = np.sqrt(self.wind_ucp**2 + self.wind_vcp**2)
+        self.wind_dir = (270-np.rad2deg(np.arctan2(self.wind_vcp,self.wind_ucp)))%360
         self.wind_gst = self.data['Sonic_Gst'].rolling(window).mean()
 
         # pressure
@@ -166,6 +166,20 @@ class LEMS(object):
         ncvar.setncattr("instrument","sonic")
         ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_spd[tsid:tfid+1]
+
+        ncvar           = self.outfile.createVariable('wind_ucp', "f8", ("t",))
+        ncvar.long_name = "u-commponent wind speed from sonic"
+        ncvar.units     = "m s-1"
+        ncvar.setncattr("instrument","sonic")
+        ncvar.setncattr("level","2 m AGL")
+        ncvar[:]        = self.wind_ucp[tsid:tfid+1]
+
+        ncvar           = self.outfile.createVariable('wind_vcp', "f8", ("t",))
+        ncvar.long_name = "v-commponent wind speed from sonic"
+        ncvar.units     = "m s-1"
+        ncvar.setncattr("instrument","sonic")
+        ncvar.setncattr("level","2 m AGL")
+        ncvar[:]        = self.wind_vcp[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('wind_gst', "f8", ("t",))
         ncvar.long_name = "wind gust from sonic"
