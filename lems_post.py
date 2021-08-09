@@ -27,12 +27,9 @@ class LEMS(object):
         
         # temperature
         self.T_sfc_ir = self.data['MLX_IR_C'].rolling(window).mean()
-        self.T_sfc_am = self.data['MLX_Amb_C'].rolling(window).mean()
         self.T_air_am = self.data['SHT_Amb_C'].rolling(window).mean()
         self.T_soil_u = self.data['Upper_Soil_Temp'].rolling(window).mean()
         self.T_soil_l = self.data['Lower_Soil_Temp'].rolling(window).mean()
-        self.T_bmp_am = self.data['BMP_Amb'].rolling(window).mean()
-        self.T_anemom = self.data['Sonic_Tmp'].rolling(window).mean()
 
         # moisture
         self.relh_air = self.data['SHT_Hum_Pct'].rolling(window).mean()
@@ -46,7 +43,6 @@ class LEMS(object):
         self.wind_vcp = (-self.data['Sonic_Spd']*np.cos(np.pi*self.data['Sonic_Dir']/180.)).rolling(window).mean()
         self.wind_spd = np.sqrt(self.wind_ucp**2 + self.wind_vcp**2)
         self.wind_dir = (270-np.rad2deg(np.arctan2(self.wind_vcp,self.wind_ucp)))%360
-        self.wind_gst = self.data['Sonic_Gst'].rolling(window).mean()
 
         # pressure
         self.pressure = self.data['Pressure'].rolling(window).mean()
@@ -63,7 +59,7 @@ class LEMS(object):
         self.outfile             = nc.Dataset(outfile,'w')
         self.outfile.description = "LEMS output file"
         self.outfile.source      = "Jeremy A. Gibbs"
-        #self.outfile.history     = "Created " + time.ctime(time.time())
+        self.outfile.history     = "Created " + time.ctime(time.time())
         
         # starting time index
         tsid = 0
@@ -90,38 +86,18 @@ class LEMS(object):
         ncvar[:]        = times
 
         # temperature
-        ncvar           = self.outfile.createVariable('T_sfc_ir', "f8", ("t",))
-        ncvar.long_name = "IR surface temperature"
+        ncvar           = self.outfile.createVariable('T_sfc', "f8", ("t",))
+        ncvar.long_name = "surface temperature"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","MLX")
         ncvar[:]        = self.T_sfc_ir[tsid:tfid+1]
 
-        ncvar           = self.outfile.createVariable('T_sfc_am', "f8", ("t",))
-        ncvar.long_name = "ambient surface temperature"
-        ncvar.units     = "C"
-        ncvar.setncattr("instrument","MLX")
-        ncvar[:]        = self.T_sfc_am[tsid:tfid+1]
-
-        ncvar           = self.outfile.createVariable('T_air_sht', "f8", ("t",))
-        ncvar.long_name = "ambient air temperature from SHT"
+        ncvar           = self.outfile.createVariable('T_air', "f8", ("t",))
+        ncvar.long_name = "ambient air temperature"
         ncvar.units     = "C"
         ncvar.setncattr("instrument","SHT")
         ncvar.setncattr("level","1.5 m AGL")
         ncvar[:]        = self.T_air_am[tsid:tfid+1]
-
-        ncvar           = self.outfile.createVariable('T_air_son', "f8", ("t",))
-        ncvar.long_name = "ambient air temperature from sonic anemometer"
-        ncvar.units     = "C"
-        ncvar.setncattr("instrument","sonic")
-        ncvar.setncattr("level","2 m AGL")
-        ncvar[:]        = self.T_anemom[tsid:tfid+1]
-
-        ncvar           = self.outfile.createVariable('T_air_bmp', "f8", ("t",))
-        ncvar.long_name = "ambient air temperature from BMP pressure sensor"
-        ncvar.units     = "C"
-        ncvar.setncattr("instrument","BMP")
-        ncvar.setncattr("level","1 m AGL")
-        ncvar[:]        = self.T_bmp_am[tsid:tfid+1]
 
         ncvar           = self.outfile.createVariable('T_soil_u', "f8", ("t",))
         ncvar.long_name = "soil temperature (upper)"
@@ -138,7 +114,7 @@ class LEMS(object):
         ncvar[:]        = self.T_soil_l[tsid:tfid+1]
 
         # moisture
-        ncvar           = self.outfile.createVariable('r_air_sht', "f8", ("t",))
+        ncvar           = self.outfile.createVariable('rh_air', "f8", ("t",))
         ncvar.long_name = "relative humidity of air"
         ncvar.units     = "%"
         ncvar.setncattr("instrument","SHT")
@@ -160,36 +136,29 @@ class LEMS(object):
         ncvar[:]        = self.q_soil_l[tsid:tfid+1]
 
         # wind
-        ncvar           = self.outfile.createVariable('wind_spd', "f8", ("t",))
-        ncvar.long_name = "wind speed from sonic"
+        ncvar           = self.outfile.createVariable('wind_s', "f8", ("t",))
+        ncvar.long_name = "wind speed"
         ncvar.units     = "m s-1"
         ncvar.setncattr("instrument","sonic")
         ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_spd[tsid:tfid+1]
 
-        ncvar           = self.outfile.createVariable('wind_ucp', "f8", ("t",))
-        ncvar.long_name = "u-commponent wind speed from sonic"
+        ncvar           = self.outfile.createVariable('wind_u', "f8", ("t",))
+        ncvar.long_name = "u-commponent wind speed"
         ncvar.units     = "m s-1"
         ncvar.setncattr("instrument","sonic")
         ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_ucp[tsid:tfid+1]
 
-        ncvar           = self.outfile.createVariable('wind_vcp', "f8", ("t",))
-        ncvar.long_name = "v-commponent wind speed from sonic"
+        ncvar           = self.outfile.createVariable('wind_v', "f8", ("t",))
+        ncvar.long_name = "v-commponent wind speed"
         ncvar.units     = "m s-1"
         ncvar.setncattr("instrument","sonic")
         ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_vcp[tsid:tfid+1]
 
-        ncvar           = self.outfile.createVariable('wind_gst', "f8", ("t",))
-        ncvar.long_name = "wind gust from sonic"
-        ncvar.units     = "m s-1"
-        ncvar.setncattr("instrument","sonic")
-        ncvar.setncattr("level","2 m AGL")
-        ncvar[:]        = self.wind_gst[tsid:tfid+1]
-
-        ncvar           = self.outfile.createVariable('wind_dir', "f8", ("t",))
-        ncvar.long_name = "wind direction from sonic"
+        ncvar           = self.outfile.createVariable('wind_d', "f8", ("t",))
+        ncvar.long_name = "wind direction"
         ncvar.units     = "deg"
         ncvar.setncattr("instrument","sonic")
         ncvar.setncattr("level","2 m AGL")
@@ -197,14 +166,14 @@ class LEMS(object):
        
         # pressure
         ncvar           = self.outfile.createVariable('pressure', "f8", ("t",))
-        ncvar.long_name = "pressure from BMP sensor"
+        ncvar.long_name = "atmospheric pressure"
         ncvar.units     = "hPa"
         ncvar.setncattr("instrument","BMP")
         ncvar.setncattr("level","1 m AGL")
         ncvar[:]        = self.pressure[tsid:tfid+1]
         
         # insolation
-        ncvar           = self.outfile.createVariable('radsolar', "f8", ("t",))
+        ncvar           = self.outfile.createVariable('insolation', "f8", ("t",))
         ncvar.long_name = "incoming solar radiation"
         ncvar.units     = "W m-2"
         ncvar.setncattr("instrument","LiCor")
@@ -243,7 +212,7 @@ if __name__ == "__main__":
     end   = args.end
     avg   = args.avg
 
-    # convert averaging window to number of records at 10 Hz
+    # convert averaging window to number of records at 0.1 Hz
     window = int(avg * 60 / 10) if avg else 1
 
     # if no netcdf output name given, use base name from input file
