@@ -3,7 +3,6 @@ import argparse, os, time, datetime
 import pandas as pd
 import numpy as np
 import netCDF4 as nc
-import pylab as pl
 
 # LEMS class
 class LEMS(object):
@@ -17,6 +16,10 @@ class LEMS(object):
         self.data = pd.read_csv(datafile,
                                 parse_dates={"date":["Year","Month","Date","Hour","Minute","Second"]},
                                 date_parser=self.parse)
+
+        # flag and drop entries with no proper data
+        self.data.replace(-9990.00, np.nan, inplace=True)
+        self.data.dropna()
 
         # date
         self.date = [t.to_pydatetime() for t in self.data['date']]
@@ -61,6 +64,10 @@ class LEMS(object):
         self.outfile.source      = "Jeremy A. Gibbs"
         self.outfile.history     = "Created " + time.ctime(time.time())
         
+        # convert dates to UTC
+        # we add 6 hours because data was stored in local mountain time.
+        self.date = [date + datetime.timedelta(hours=6) for date in self.date]
+
         # starting time index
         tsid = 0
         if ts:
@@ -81,10 +88,10 @@ class LEMS(object):
         # add variables
         ncvar           = self.outfile.createVariable('time', "f8", ("t",))
         ncvar.long_name = "time"
-        ncvar.units     = 'seconds since %s'%ts_str
+        ncvar.units     = 'seconds since %s UTC'%ts_str
         times           = nc.date2num(self.date[tsid:tfid+1], units=ncvar.units, calendar = 'standard')
         ncvar[:]        = times
-
+        
         # temperature
         ncvar           = self.outfile.createVariable('T_sfc', "f8", ("t",))
         ncvar.long_name = "surface temperature"
@@ -163,7 +170,7 @@ class LEMS(object):
         ncvar.setncattr("instrument","sonic")
         ncvar.setncattr("level","2 m AGL")
         ncvar[:]        = self.wind_dir[tsid:tfid+1]
-       
+
         # pressure
         ncvar           = self.outfile.createVariable('pressure', "f8", ("t",))
         ncvar.long_name = "atmospheric pressure"
@@ -182,9 +189,11 @@ class LEMS(object):
         
     # utlity function to format date/time for Pandas
     def parse(self, year, month, day, hour, minute, second):
-        return year+ '-' +month+ '-' +day+ ' ' +hour+ ':' +minute+ ':' +second
+        dstr = year+ '-' +month+ '-' +day+ ' ' +hour+ ':' +minute+ ':' +second
+        dobj = pd.to_datetime(dstr, format='%Y-%m-%d %H:%M:%S')
+        return dobj
     
-    # utility function to return 
+    # utility function to return nearest indice of an item
     def nearest_ind(self, items, pivot):
         diff = np.abs([item - pivot for item in items])
         return diff.argmin(0)
@@ -216,8 +225,7 @@ if __name__ == "__main__":
     window = int(avg * 60 / 10) if avg else 1
 
     # if no netcdf output name given, use base name from input file
-    if not ofile:
-        ofile = os.path.splitext(ifile)[0] + '.nc'
+    if not ofile: ofile = os.path.splitext(ifile)[0] + '.nc'
 
     # create LEMS instance from file
     lems = LEMS(ifile,window=window)
