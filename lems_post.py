@@ -32,11 +32,13 @@ class LEMS(object):
         self.T_air_am = self.data['SHT_Amb_C'].rolling(window).mean()
         self.T_soil_u = self.data['Upper_Soil_Temp'].rolling(window).mean()
         self.T_soil_l = self.data['Lower_Soil_Temp'].rolling(window).mean()
+        self.T_soil_l[:] = np.nan # were not functioning
 
         # moisture
         self.relh_air = self.data['SHT_Hum_Pct'].rolling(window).mean()
         self.q_soil_u = self.data['Upper_Soil_Mois'].rolling(window).mean()
         self.q_soil_l = self.data['Lower_Soil_Mois'].rolling(window).mean()
+        self.q_soil_l[:] = np.nan # were not functioning
 
         # wind
         self.wind_spd = self.data['Sonic_Spd']
@@ -50,7 +52,9 @@ class LEMS(object):
         self.pressure = self.data['Pressure'].rolling(window).mean()
         
         # insolation
-        self.radsolar = self.data['Sunlight'].rolling(window).mean()        
+        self.radsolar = self.data['Sunlight'].rolling(window).mean()
+        if datafile != 'LEMS_03.csv':
+             self.radsolar[:] = np.nan # all wrong except for LEMS 03
 
     # function to write data to netcdf
     def to_netcdf(self,outfile,ts=None,tf=None):
