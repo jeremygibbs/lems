@@ -17,9 +17,8 @@ class LEMS(object):
                                 parse_dates={"date":["Year","Month","Date","Hour","Minute","Second"]},
                                 date_parser=self.parse)
 
-        # flag and drop entries with no proper data
-        self.data.replace(-9990.00, np.nan, inplace=True)
-        self.data.dropna()
+        # flag missing data
+        self.data.mask(self.data.eq(-9990.00),inplace=True)
 
         # date
         self.date = [t.to_pydatetime() for t in self.data['date']]
@@ -38,7 +37,7 @@ class LEMS(object):
         self.relh_air = self.data['SHT_Hum_Pct'].rolling(window).mean()
         self.q_soil_u = self.data['Upper_Soil_Mois'].rolling(window).mean()
         self.q_soil_l = self.data['Lower_Soil_Mois'].rolling(window).mean()
-        
+
         # wind
         self.wind_spd = self.data['Sonic_Spd']
         self.wind_dir = self.data['Sonic_Dir']
@@ -51,7 +50,7 @@ class LEMS(object):
         self.pressure = self.data['Pressure'].rolling(window).mean()
         
         # insolation
-        self.radsolar = self.data['Sunlight'].rolling(window).mean()
+        self.radsolar = self.data['Sunlight'].rolling(window).mean()        
 
     # function to write data to netcdf
     def to_netcdf(self,outfile,ts=None,tf=None):
@@ -63,7 +62,7 @@ class LEMS(object):
         self.outfile.description = "LEMS output file"
         self.outfile.source      = "Jeremy A. Gibbs"
         self.outfile.history     = "Created " + time.ctime(time.time())
-        
+
         # convert dates to UTC
         # we add 6 hours because data was stored in local mountain time.
         self.date = [date + datetime.timedelta(hours=6) for date in self.date]
